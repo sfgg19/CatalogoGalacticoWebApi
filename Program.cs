@@ -1,8 +1,9 @@
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity;
 using CatalogoGalacticoApi.Data;
 using CatalogoGalacticoApi.Models;
 using CatalogoGalacticoApi.Services;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,7 +19,8 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // 2. Controladores y Especificación OpenAPI
 builder.Services.AddControllers();
-builder.Services.AddOpenApi();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(); ;
 
 // 3. Registro de Servicios (Seguridad y Negocio)
 builder.Services.AddSingleton<ICifradoService, CifradoService>();
@@ -26,13 +28,15 @@ builder.Services.AddScoped<IPasswordHasher<Personaje>, PasswordHasher<Personaje>
 builder.Services.AddScoped<IPersonajeService, PersonajeService>();
 builder.Services.AddScoped<ICardPersonajeService, CardPersonajeService>();
 builder.Services.AddScoped<IEventoService, EventoService>();
+builder.Services.AddScoped<IPlanetaService, PlanetaService>();
 
 var app = builder.Build();
 
 // 4. Activar Swagger UI apuntando al JSON de OpenAPI
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI();
     app.UseSwaggerUI(options =>
     {
         options.SwaggerEndpoint("/openapi/v1.json", "Catálogo Galáctico v1");
