@@ -14,6 +14,7 @@ public class AppDbContext : DbContext
     public DbSet<Personaje> Personajes => Set<Personaje>();
     public DbSet<CardPersonaje> CardsPersonaje => Set<CardPersonaje>();
     public DbSet<Evento> Eventos => Set<Evento>();
+    public DbSet<Planeta> Planetas => Set<Planeta>();
 
     // Configuración estructural de la base de datos (Fluent API)
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -50,11 +51,26 @@ public class AppDbContext : DbContext
              .OnDelete(DeleteBehavior.Cascade); // Si se elimina un personaje, se elimina su carta automáticamente
         });
 
-        // 3. Reglas para Evento
+        // 3. Reglas para Planeta
+        modelBuilder.Entity<Planeta>(e =>
+        {
+            e.Property(pl => pl.Nombre).IsRequired().HasMaxLength(100);
+            e.HasIndex(pl => pl.Nombre).IsUnique();
+            e.Property(pl => pl.Sistema).HasMaxLength(100);
+            e.Property(pl => pl.Tipo).HasMaxLength(50);
+            e.Property(pl => pl.Region).HasMaxLength(100);
+        });
+
+        // 4. Reglas para Evento y Relación 1:N con Planeta
         modelBuilder.Entity<Evento>(e =>
         {
             e.Property(ev => ev.Nombre).IsRequired().HasMaxLength(150);
-            e.Property(ev => ev.Ubicacion).HasMaxLength(150);
+
+            // Relación 1:N (Un Planeta tiene muchos Eventos)
+            e.HasOne(ev => ev.Planeta)
+             .WithMany(pl => pl.Eventos)
+             .HasForeignKey(ev => ev.PlanetaId)
+             .OnDelete(DeleteBehavior.Restrict); // Evita borrar planetas si tienen eventos vinculados
         });
     }
 }
