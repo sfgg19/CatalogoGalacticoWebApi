@@ -19,13 +19,14 @@ public class EventoService : IEventoService
     public async Task<List<EventoDto>> ListarAsync(string? ubicacion, int? fecha)
     {
         var query = _db.Eventos
+            .Include(e => e.Planeta)
             .Include(e => e.Participantes)
                 .ThenInclude(p => p.Card)
             .AsNoTracking()
             .AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(ubicacion))
-            query = query.Where(e => e.Ubicacion.Contains(ubicacion));
+            query = query.Where(e => e.Planeta.Nombre.Contains(ubicacion));
 
         if (fecha.HasValue)
             query = query.Where(e => e.Fecha == fecha.Value);
@@ -37,6 +38,7 @@ public class EventoService : IEventoService
     public async Task<EventoDto?> ObtenerPorIdAsync(int id)
     {
         var evento = await _db.Eventos
+            .Include(e => e.Planeta)
             .Include(e => e.Participantes)
                 .ThenInclude(p => p.Card)
             .AsNoTracking()
@@ -47,6 +49,10 @@ public class EventoService : IEventoService
 
     public async Task<ResultadoOperacion<EventoDto>> CrearAsync(EventoCrearDto dto)
     {
+        var planetaExiste = await _db.Planetas.AnyAsync(p => p.Id == dto.PlanetaId);
+        if (!planetaExiste)
+            return ResultadoOperacion<EventoDto>.Fallido(EstadoOperacion.ErrorReglaNegocio, "El planeta especificado no existe.");
+
         var participantes = new List<Personaje>();
         if (dto.ParticipantesIds.Any())
         {
@@ -64,7 +70,7 @@ public class EventoService : IEventoService
         {
             Nombre = dto.Nombre,
             Fecha = dto.Fecha,
-            Ubicacion = dto.Ubicacion,
+            PlanetaId = dto.PlanetaId,
             Descripcion = dto.Descripcion,
             Participantes = participantes
         };
@@ -72,11 +78,17 @@ public class EventoService : IEventoService
         _db.Eventos.Add(evento);
         await _db.SaveChangesAsync();
 
+        await _db.Entry(evento).Reference(e => e.Planeta).LoadAsync();
+
         return ResultadoOperacion<EventoDto>.Exitoso(MapearEventoADto(evento));
     }
 
     public async Task<ResultadoOperacion<bool>> ActualizarAsync(int id, EventoCrearDto dto)
     {
+        var planetaExiste = await _db.Planetas.AnyAsync(p => p.Id == dto.PlanetaId);
+        if (!planetaExiste)
+            return ResultadoOperacion<bool>.Fallido(EstadoOperacion.ErrorReglaNegocio, "El planeta especificado no existe.");
+
         var evento = await _db.Eventos
             .Include(e => e.Participantes)
             .FirstOrDefaultAsync(e => e.Id == id);
@@ -94,7 +106,7 @@ public class EventoService : IEventoService
 
         evento.Nombre = dto.Nombre;
         evento.Fecha = dto.Fecha;
-        evento.Ubicacion = dto.Ubicacion;
+        evento.PlanetaId = dto.PlanetaId;
         evento.Descripcion = dto.Descripcion;
         evento.Participantes = participantes;
 
@@ -212,7 +224,8 @@ public class EventoService : IEventoService
         Id = e.Id,
         Nombre = e.Nombre,
         FechaAnio = e.Fecha,
-        Ubicacion = e.Ubicacion,
+        PlanetaId = e.PlanetaId,
+        PlanetaNombre = e.Planeta?.Nombre ?? "Desconocido",
         Descripcion = e.Descripcion,
         ResultadoGanador = e.ResultadoGanador,
         Participantes = e.Participantes.Select(p => new PersonajeDto
