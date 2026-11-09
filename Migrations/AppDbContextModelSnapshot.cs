@@ -81,15 +81,15 @@ namespace CatalogoGalacticoApi.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
 
+                    b.Property<int>("PlanetaId")
+                        .HasColumnType("int");
+
                     b.Property<string>("ResultadoGanador")
                         .HasColumnType("longtext");
 
-                    b.Property<string>("Ubicacion")
-                        .IsRequired()
-                        .HasMaxLength(150)
-                        .HasColumnType("varchar(150)");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("PlanetaId");
 
                     b.ToTable("Eventos");
                 });
@@ -140,6 +140,45 @@ namespace CatalogoGalacticoApi.Migrations
                     b.ToTable("Personajes");
                 });
 
+            modelBuilder.Entity("CatalogoGalacticoApi.Models.Planeta", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("EsPeligroso")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Region")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Sistema")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Tipo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Nombre")
+                        .IsUnique();
+
+                    b.ToTable("Planetas");
+                });
+
             modelBuilder.Entity("ParticipacionEvento", b =>
                 {
                     b.Property<int>("EventosId")
@@ -166,6 +205,17 @@ namespace CatalogoGalacticoApi.Migrations
                     b.Navigation("Personaje");
                 });
 
+            modelBuilder.Entity("CatalogoGalacticoApi.Models.Evento", b =>
+                {
+                    b.HasOne("CatalogoGalacticoApi.Models.Planeta", "Planeta")
+                        .WithMany("Eventos")
+                        .HasForeignKey("PlanetaId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Planeta");
+                });
+
             modelBuilder.Entity("ParticipacionEvento", b =>
                 {
                     b.HasOne("CatalogoGalacticoApi.Models.Evento", null)
@@ -184,6 +234,11 @@ namespace CatalogoGalacticoApi.Migrations
             modelBuilder.Entity("CatalogoGalacticoApi.Models.Personaje", b =>
                 {
                     b.Navigation("Card");
+                });
+
+            modelBuilder.Entity("CatalogoGalacticoApi.Models.Planeta", b =>
+                {
+                    b.Navigation("Eventos");
                 });
 #pragma warning restore 612, 618
         }
