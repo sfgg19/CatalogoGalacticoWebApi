@@ -1,24 +1,14 @@
 using Microsoft.EntityFrameworkCore;
-using CatalogoGalacticoApi.Data;
-using CatalogoGalacticoApi.Services;
-using CatalogoGalacticoApi.Models;
 using Microsoft.AspNetCore.Identity;
+using CatalogoGalacticoApi.Data;
+using CatalogoGalacticoApi.Models;
+using CatalogoGalacticoApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// 1. Base de Datos
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
     ?? throw new InvalidOperationException("Falta la cadena DefaultConnection.");
-
-//dsf
-// 1. Registrar utilidades de Seguridad
-builder.Services.AddSingleton<ICifradoService, CifradoService>(); // Singleton porque no tiene estado y la clave es constante
-builder.Services.AddScoped<IPasswordHasher<Personaje>, PasswordHasher<Personaje>>(); // El Hasher oficial de ASP.NET Core
-
-// 2. Registrar Servicios de Negocio (Scoped para que vivan por cada petición HTTP)
-builder.Services.AddScoped<IPersonajeService, PersonajeService>();
-builder.Services.AddScoped<ICardPersonajeService, CardPersonajeService>();
-builder.Services.AddScoped<IEventoService, EventoService>();
-//dsf
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseMySql(
@@ -26,14 +16,27 @@ builder.Services.AddDbContext<AppDbContext>(options =>
         ServerVersion.AutoDetect(connectionString)
     ));
 
+// 2. Controladores y Especificación OpenAPI
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
+// 3. Registro de Servicios (Seguridad y Negocio)
+builder.Services.AddSingleton<ICifradoService, CifradoService>();
+builder.Services.AddScoped<IPasswordHasher<Personaje>, PasswordHasher<Personaje>>();
+builder.Services.AddScoped<IPersonajeService, PersonajeService>();
+builder.Services.AddScoped<ICardPersonajeService, CardPersonajeService>();
+builder.Services.AddScoped<IEventoService, EventoService>();
+
 var app = builder.Build();
 
+// 4. Activar Swagger UI apuntando al JSON de OpenAPI
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint("/openapi/v1.json", "Catálogo Galáctico v1");
+    });
 }
 
 app.UseHttpsRedirection();
