@@ -89,8 +89,7 @@ dotnet user-secrets init
 *(Asegúrate de poner el usuario y contraseña que creaste en el Paso 1)*
 
 ```powershell
-dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=localhost;Port=3306;Database=catalogo_galactico_db;User=catalogo_user;Password=ClaveSegura123"
-
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" "Server=127.0.0.1;Port=3306;Database=catalogo_galactico_db;Uid=catalogo_user;Password=ClaveSegura123;SslMode=None;AllowPublicKeyRetrieval=True;Connection Timeout=15;CharSet=utf8mb4;"
 ```
 
 **3. Generar y Guardar la Clave de Cifrado (AES-GCM):**
