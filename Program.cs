@@ -1,11 +1,21 @@
 using CatalogoGalacticoApi.Data;
+using CatalogoGalacticoApi.Middleware;
 using CatalogoGalacticoApi.Models;
 using CatalogoGalacticoApi.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+//0. Logs 
+builder.Host.UseSerilog((context, configuration) =>
+{
+    configuration
+        .ReadFrom.Configuration(context.Configuration)
+        .Enrich.FromLogContext();
+});
 
 // 1. Base de Datos
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -31,6 +41,8 @@ builder.Services.AddScoped<IEventoService, EventoService>();
 builder.Services.AddScoped<IPlanetaService, PlanetaService>();
 
 var app = builder.Build();
+
+app.UseMiddleware<ContextoPeticionMiddleware>();
 
 // 4. Activar Swagger UI apuntando al JSON de OpenAPI
 if (app.Environment.IsDevelopment())
