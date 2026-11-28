@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 using CatalogoGalacticoApi.Models;
 
 namespace CatalogoGalacticoApi.Dtos;
@@ -8,6 +8,11 @@ public class PersonajeCrearDto
     [Required(ErrorMessage = "El nombre es obligatorio.")]
     [StringLength(100, ErrorMessage = "El nombre no puede superar los 100 caracteres.")]
     public string Nombre { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "El correo es obligatorio.")]
+    [EmailAddress(ErrorMessage = "Correo inválido.")]
+    [StringLength(150)]
+    public string Email { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "La especie es obligatoria.")]
     [StringLength(80)]
