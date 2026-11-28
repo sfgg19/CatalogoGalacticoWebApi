@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using CatalogoGalacticoApi.Data;
 using CatalogoGalacticoApi.Dtos;
@@ -22,7 +22,7 @@ public class PersonajeService : IPersonajeService
     public async Task<List<PersonajeDto>> ListarAsync()
     {
         var personajes = await _db.Personajes.Include(p => p.Card).AsNoTracking().ToListAsync();
-        return personajes.Select(MapearADto).ToList();
+        return personajes.Select(p => MapearADto(p)).ToList();
     }
 
     public async Task<ResultadoOperacion<List<PersonajeDto>>> ListarFiltradoAsync(string? nombre, bool? fuerzaSensitivo)
@@ -36,7 +36,7 @@ public class PersonajeService : IPersonajeService
             query = query.Where(p => p.FuerzaSensitivo == fuerzaSensitivo.Value);
 
         var personajes = await query.ToListAsync();
-        var lista = personajes.Select(MapearADto).ToList();
+        var lista = personajes.Select(p => MapearADto(p)).ToList();
 
         return ResultadoOperacion<List<PersonajeDto>>.Exitoso(lista);
     }
@@ -51,23 +51,26 @@ public class PersonajeService : IPersonajeService
             .AsNoTracking()
             .ToListAsync();
 
-        return personajes.Select(MapearADto).ToList();
+        return personajes.Select(p => MapearADto(p)).ToList();
     }
 
     public async Task<PersonajeDto?> ObtenerPorIdAsync(int id)
     {
         var personaje = await _db.Personajes.Include(p => p.Card).AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
-        return personaje is null ? null : MapearADto(personaje);
+        return personaje is null ? null : MapearADto(personaje, incluirCoordenadas: true);
     }
 
     public async Task<ResultadoOperacion<PersonajeDto>> CrearAsync(PersonajeCrearDto dto)
     {
-        var existe = await _db.Personajes.AnyAsync(p => p.Nombre.ToLower() == dto.Nombre.ToLower());
-        if (existe) return ResultadoOperacion<PersonajeDto>.Fallido(EstadoOperacion.ConflictoDuplicado, "Ya existe un personaje con este nombre.");
+        var email = dto.Email.Trim().ToLowerInvariant();
+        var existe = await _db.Personajes.AnyAsync(p => p.Nombre.ToLower() == dto.Nombre.ToLower() || p.Email == email);
+        if (existe) return ResultadoOperacion<PersonajeDto>.Fallido(EstadoOperacion.ConflictoDuplicado, "Ya existe un personaje con este nombre o correo.");
 
         var personaje = new Personaje
         {
             Nombre = dto.Nombre,
+            Email = email,
+            Rol = "Usuario",
             Especie = dto.Especie,
             Faccion = (Faccion)dto.Faccion,
             Afiliacion = dto.Afiliacion,
@@ -79,7 +82,7 @@ public class PersonajeService : IPersonajeService
 
         _db.Personajes.Add(personaje);
         await _db.SaveChangesAsync();
-        return ResultadoOperacion<PersonajeDto>.Exitoso(MapearADto(personaje));
+        return ResultadoOperacion<PersonajeDto>.Exitoso(MapearADto(personaje, incluirCoordenadas: true));
     }
 
     public async Task<ResultadoOperacion<bool>> ActualizarAsync(int id, PersonajeCrearDto dto)
@@ -87,10 +90,12 @@ public class PersonajeService : IPersonajeService
         var personaje = await _db.Personajes.FindAsync(id);
         if (personaje is null) return ResultadoOperacion<bool>.Fallido(EstadoOperacion.NoEncontrado, "Personaje no encontrado.");
 
-        var existeNombre = await _db.Personajes.AnyAsync(p => p.Nombre.ToLower() == dto.Nombre.ToLower() && p.Id != id);
-        if (existeNombre) return ResultadoOperacion<bool>.Fallido(EstadoOperacion.ConflictoDuplicado, "Ya existe otro personaje con este nombre.");
+        var email = dto.Email.Trim().ToLowerInvariant();
+        var existeNombre = await _db.Personajes.AnyAsync(p => (p.Nombre.ToLower() == dto.Nombre.ToLower() || p.Email == email) && p.Id != id);
+        if (existeNombre) return ResultadoOperacion<bool>.Fallido(EstadoOperacion.ConflictoDuplicado, "Ya existe otro personaje con este nombre o correo.");
 
         personaje.Nombre = dto.Nombre;
+        personaje.Email = email;
         personaje.Especie = dto.Especie;
         personaje.Faccion = (Faccion)dto.Faccion;
         personaje.Afiliacion = dto.Afiliacion;
@@ -139,16 +144,18 @@ public class PersonajeService : IPersonajeService
         return ResultadoOperacion<List<EventoDto>>.Exitoso(eventosDto);
     }
 
-    private PersonajeDto MapearADto(Personaje p) => new()
+    private PersonajeDto MapearADto(Personaje p, bool incluirCoordenadas = false) => new()
     {
         Id = p.Id,
         Nombre = p.Nombre,
+        Email = p.Email,
+        Rol = p.Rol,
         Especie = p.Especie,
         Faccion = p.Faccion.ToString(),
         Afiliacion = p.Afiliacion,
         Estado = p.Estado.ToString(),
         FuerzaSensitivo = p.FuerzaSensitivo,
-        CoordenadasOrigen = _cifrado.Descifrar(p.CoordenadasOrigen),
+        CoordenadasOrigen = incluirCoordenadas ? _cifrado.Descifrar(p.CoordenadasOrigen) : null,
         Card = p.Card is null ? null : new CardPersonajeDto
         {
             Id = p.Card.Id,
