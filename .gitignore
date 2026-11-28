@@ -6,6 +6,10 @@
 # dotenv files
 .env
 
+# Referencia docente y plan interno (no subir a GitHub)
+_referencia_docente/
+REGLAS_PROYECTO.md
+
 # User-specific files
 *.rsuser
 *.suo
