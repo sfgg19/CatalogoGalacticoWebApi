@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using CatalogoGalacticoApi.Data;
 using CatalogoGalacticoApi.Dtos;
 using CatalogoGalacticoApi.Models;
