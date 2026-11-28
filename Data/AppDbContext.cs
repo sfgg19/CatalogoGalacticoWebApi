@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using CatalogoGalacticoApi.Models;
 
 namespace CatalogoGalacticoApi.Data;
