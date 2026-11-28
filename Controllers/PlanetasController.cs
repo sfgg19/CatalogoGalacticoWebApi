@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using CatalogoGalacticoApi.Services;
 using CatalogoGalacticoApi.Dtos;
@@ -8,6 +9,7 @@ namespace CatalogoGalacticoApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 [Tags("Planetas")]
 [Produces("application/json")]
 public class PlanetasController : ControllerBase
@@ -41,6 +43,7 @@ public class PlanetasController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Administrador")]
     [EndpointSummary("Registrar un nuevo planeta")]
     [EndpointDescription("Crea un nuevo planeta validando que el nombre no esté duplicado.")]
     [ProducesResponseType(typeof(PlanetaDto), StatusCodes.Status201Created)]
@@ -60,6 +63,7 @@ public class PlanetasController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Administrador")]
     [EndpointSummary("Actualizar un planeta")]
     [EndpointDescription("Modifica los datos de un planeta existente.")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -82,6 +86,7 @@ public class PlanetasController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Administrador")]
     [EndpointSummary("Eliminar un planeta")]
     [EndpointDescription("Elimina un planeta si no cuenta con eventos históricos asociados.")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
