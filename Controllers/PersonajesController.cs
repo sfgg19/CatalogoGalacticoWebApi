@@ -1,13 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using CatalogoGalacticoApi.Services;
 using CatalogoGalacticoApi.Dtos;
 using System.ComponentModel;
+using System.Security.Claims;
 
 namespace CatalogoGalacticoApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 [Tags("Personajes")]
 [Produces("application/json")]
 public class PersonajesController : ControllerBase
@@ -54,6 +57,10 @@ public class PersonajesController : ControllerBase
     public async Task<ActionResult<PersonajeDto>> ObtenerPorId(
         [Description("ID numérico único del personaje que deseas consultar (Ej: 1, 2, 5)")] int id)
     {
+        var sub = User.FindFirstValue("sub");
+        if (!User.IsInRole("Administrador") && sub != id.ToString())
+            return Forbid();
+
         var personaje = await _service.ObtenerPorIdAsync(id);
         return personaje is null
             ? NotFound(new { mensaje = "Personaje no encontrado." })
@@ -68,6 +75,10 @@ public class PersonajesController : ControllerBase
     public async Task<ActionResult<IEnumerable<EventoDto>>> ObtenerEventos(
         [Description("ID numérico único del personaje del cual quieres ver sus eventos asociados")] int id)
     {
+        var sub = User.FindFirstValue("sub");
+        if (!User.IsInRole("Administrador") && sub != id.ToString())
+            return Forbid();
+
         var resultado = await _service.ObtenerEventosAsync(id);
         return resultado.Estado == EstadoOperacion.NoEncontrado
             ? NotFound(new { mensaje = resultado.MensajeError })
@@ -75,6 +86,7 @@ public class PersonajesController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Administrador")]
     [EndpointSummary("Crear un nuevo personaje")]
     [EndpointDescription("Registra un personaje nuevo. Hashea la contraseña y cifra las coordenadas de origen en Base64.")]
     [ProducesResponseType(typeof(PersonajeDto), StatusCodes.Status201Created)]
@@ -104,6 +116,10 @@ public class PersonajesController : ControllerBase
         [Description("ID numérico único del personaje que deseas actualizar")] int id,
         [Description("Nuevos datos a actualizar para el personaje")] PersonajeCrearDto dto)
     {
+        var sub = User.FindFirstValue("sub");
+        if (!User.IsInRole("Administrador") && sub != id.ToString())
+            return Forbid();
+
         var resultado = await _service.ActualizarAsync(id, dto);
 
         return resultado.Estado switch
@@ -116,6 +132,7 @@ public class PersonajesController : ControllerBase
     }
 
     [HttpDelete("{id:int}")]
+    [Authorize(Roles = "Administrador")]
     [EndpointSummary("Eliminar un personaje")]
     [EndpointDescription("Elimina permanentemente al personaje de la base de datos.")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
