@@ -1,13 +1,16 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using CatalogoGalacticoApi.Services;
 using CatalogoGalacticoApi.Dtos;
 using System.ComponentModel;
+using System.Security.Claims;
 
 namespace CatalogoGalacticoApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 [Tags("Cartas")]
 [Produces("application/json")]
 public class CartasController : ControllerBase
@@ -52,6 +55,10 @@ public class CartasController : ControllerBase
     public async Task<ActionResult<CardPersonajeDto>> Crear(
         [Description("Datos de la carta. OBLIGATORIO incluir 'personajeId' apuntando a un personaje existente que aún no tenga carta")] CardPersonajeCrearDto dto)
     {
+        var sub = User.FindFirstValue("sub");
+        if (!User.IsInRole("Administrador") && sub != dto.PersonajeId.ToString())
+            return Forbid();
+
         var resultado = await _service.CrearAsync(dto);
 
         return resultado.Estado switch
@@ -74,6 +81,14 @@ public class CartasController : ControllerBase
         [Description("ID numérico único de la carta que deseas modificar")] int id,
         [Description("Nuevos datos de la carta (Poder, Arma, HabilidadEspecial, PersonajeId)")] CardPersonajeCrearDto dto)
     {
+        var cartaActual = await _service.ObtenerPorIdAsync(id);
+        if (cartaActual is null)
+            return NotFound(new { mensaje = "Carta no encontrada." });
+
+        var sub = User.FindFirstValue("sub");
+        if (!User.IsInRole("Administrador") && (sub != cartaActual.PersonajeId.ToString() || sub != dto.PersonajeId.ToString()))
+            return Forbid();
+
         var resultado = await _service.ActualizarAsync(id, dto);
 
         return resultado.Estado switch
