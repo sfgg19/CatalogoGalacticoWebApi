@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using CatalogoGalacticoApi.Services;
 using CatalogoGalacticoApi.Dtos;
@@ -8,6 +9,7 @@ namespace CatalogoGalacticoApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
+[Authorize]
 [Tags("Eventos")]
 [Produces("application/json")]
 public class EventosController : ControllerBase
@@ -43,6 +45,7 @@ public class EventosController : ControllerBase
     }
 
     [HttpPost]
+    [Authorize(Roles = "Administrador")]
     [EndpointSummary("Registrar un nuevo evento histórico")]
     [EndpointDescription("Crea un evento validando la existencia del planeta y de los personajes participantes.")]
     [ProducesResponseType(typeof(EventoDto), StatusCodes.Status201Created)]
@@ -60,6 +63,7 @@ public class EventosController : ControllerBase
     }
 
     [HttpPut("{id:int}")]
+    [Authorize(Roles = "Administrador")]
     [EndpointSummary("Actualizar un evento")]
     [EndpointDescription("Modifica los datos de un evento histórico existente.")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
@@ -99,6 +103,7 @@ public class EventosController : ControllerBase
     }
 
     [HttpPost("{id:int}/simular-batalla")]
+    [Authorize(Roles = "Administrador")]
     [EndpointSummary("Simular batalla del evento")]
     [EndpointDescription("Calcula el desenlace del combate sumando poder por facciones y marcando una baja.")]
     [ProducesResponseType(StatusCodes.Status200OK)]
