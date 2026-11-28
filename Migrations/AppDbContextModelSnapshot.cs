@@ -110,6 +110,10 @@ namespace CatalogoGalacticoApi.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
                     b.Property<string>("Especie")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -129,6 +133,10 @@ namespace CatalogoGalacticoApi.Migrations
                         .HasColumnType("varchar(100)");
 
                     b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Rol")
                         .IsRequired()
                         .HasColumnType("longtext");
 
