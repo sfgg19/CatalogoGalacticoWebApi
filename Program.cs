@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using System.Threading.RateLimiting;
 using CatalogoGalacticoApi.Data;
+using CatalogoGalacticoApi.Middleware;
 using CatalogoGalacticoApi.Models;
 using CatalogoGalacticoApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -10,8 +11,13 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Host.UseSerilog((contexto, configuracion) => configuracion
+    .ReadFrom.Configuration(contexto.Configuration)
+    .Enrich.FromLogContext());
 
 // 1. Base de Datos
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
@@ -134,7 +140,13 @@ builder.Services
 
 builder.Services.AddAuthorization();
 
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ManejadorGlobalExcepciones>();
+
 var app = builder.Build();
+
+app.UseMiddleware<ContextoPeticionMiddleware>();
+app.UseExceptionHandler();
 
 // Seed inicial de Administrador leyendo credenciales desde configuración (User Secrets / env)
 using (var scope = app.Services.CreateScope())
