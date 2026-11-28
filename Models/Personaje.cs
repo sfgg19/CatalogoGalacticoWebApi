@@ -1,9 +1,11 @@
-﻿namespace CatalogoGalacticoApi.Models
+namespace CatalogoGalacticoApi.Models
 {
     public class Personaje
     {
         public int Id { get; set; }
         public string Nombre { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Rol { get; set; } = "Usuario";
         public string Especie { get; set; } = string.Empty;
         public Faccion Faccion { get; set; } = Faccion.Neutral;
         public string Afiliacion { get; set; } = string.Empty;
